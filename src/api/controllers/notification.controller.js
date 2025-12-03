@@ -3,7 +3,7 @@ const { getSupabaseClient } = require('../../infrastructure/database/supabase');
 const getAllNotifications = async (req, res, next) => {
   try {
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .select('*');
@@ -29,7 +29,7 @@ const getNotificationById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
@@ -57,7 +57,7 @@ const createNotification = async (req, res, next) => {
   try {
     const notificationData = req.body;
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .insert([notificationData])
@@ -86,7 +86,7 @@ const updateNotification = async (req, res, next) => {
     const { id } = req.params;
     const notificationData = req.body;
     const supabase = getSupabaseClient();
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .update(notificationData)
@@ -115,7 +115,7 @@ const deleteNotification = async (req, res, next) => {
   try {
     const { id } = req.params;
     const supabase = getSupabaseClient();
-    
+
     const { error } = await supabase
       .from('notifications')
       .delete()
