@@ -3,10 +3,30 @@ const { getSupabaseClient } = require('../../infrastructure/database/supabase');
 const getAllNotifications = async (req, res, next) => {
   try {
     const supabase = getSupabaseClient();
+    const { type, recipient_id } = req.query;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('notifications')
-      .select('*');
+      .select(`
+        *,
+        recipient:students!recipient_id(id, student_code, email),
+        sender:students!sender_id(id, student_code, email)
+      `);
+
+    // Filter by notification type if provided
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    // Filter by recipient_id if provided
+    if (recipient_id) {
+      query = query.eq('recipient_id', recipient_id);
+    }
+
+    // Order by created_at descending (newest first)
+    query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
       return res.status(400).json({
@@ -32,7 +52,11 @@ const getNotificationById = async (req, res, next) => {
 
     const { data, error } = await supabase
       .from('notifications')
-      .select('*')
+      .select(`
+        *,
+        recipient:students!recipient_id(id, student_code, email),
+        sender:students!sender_id(id, student_code, email)
+      `)
       .eq('id', id)
       .single();
 
