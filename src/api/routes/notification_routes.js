@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notification_controller');
-const { authenticateJWT } = require('../middlewares/auth_middleware');
 const {
   createNotificationValidator,
   notificationIdValidator,
