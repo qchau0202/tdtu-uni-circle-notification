@@ -10,7 +10,15 @@ class NotificationService {
     const supabase = getSupabaseClient();
     let query = supabase
       .from('notifications')
-      .select('*, sender:students!sender_id(id, student_code, full_name, email, avatar_url)')
+      .select(`
+        *,
+        sender:students!sender_id(
+          id,
+          student_code,
+          email,
+          profiles(display_name, avatar_url)
+        )
+      `)
       .eq('recipient_id', userId)
       .order('created_at', { ascending: false });
 
@@ -29,10 +37,20 @@ class NotificationService {
     const { data, error } = await query;
     if (error) throw error;
 
-    return data.map(notification => ({
-      ...Notification.fromDatabase(notification).toJSON(),
-      sender: notification.sender
-    }));
+    return data.map(notification => {
+      const senderData = notification.sender ? {
+        id: notification.sender.id,
+        student_code: notification.sender.student_code,
+        email: notification.sender.email,
+        display_name: notification.sender.profiles?.[0]?.display_name || notification.sender.student_code,
+        avatar_url: notification.sender.profiles?.[0]?.avatar_url || null
+      } : null;
+
+      return {
+        ...Notification.fromDatabase(notification).toJSON(),
+        sender: senderData
+      };
+    });
   }
 
   /**
@@ -46,7 +64,12 @@ class NotificationService {
       .from('notifications')
       .select(`
         *,
-        sender:students!sender_id(id, student_code, full_name, email, avatar_url),
+        sender:students!sender_id(
+          id,
+          student_code,
+          email,
+          profiles(display_name, avatar_url)
+        ),
         thread:threads!reference_id(id, title)
       `)
       .eq('recipient_id', userId)
@@ -70,10 +93,19 @@ class NotificationService {
           has_unread: false
         };
       }
+      
+      const senderData = notification.sender ? {
+        id: notification.sender.id,
+        student_code: notification.sender.student_code,
+        email: notification.sender.email,
+        display_name: notification.sender.profiles?.[0]?.display_name || notification.sender.student_code,
+        avatar_url: notification.sender.profiles?.[0]?.avatar_url || null
+      } : null;
+      
       grouped[threadId].count++;
       grouped[threadId].notifications.push({
         ...Notification.fromDatabase(notification).toJSON(),
-        sender: notification.sender
+        sender: senderData
       });
       if (!notification.is_read) {
         grouped[threadId].has_unread = true;
@@ -94,7 +126,12 @@ class NotificationService {
       .from('notifications')
       .select(`
         *,
-        sender:students!sender_id(id, student_code, full_name, email, avatar_url),
+        sender:students!sender_id(
+          id,
+          student_code,
+          email,
+          profiles(display_name, avatar_url)
+        ),
         comment:comments!reference_id(id, content)
       `)
       .eq('recipient_id', userId)
@@ -120,10 +157,19 @@ class NotificationService {
           has_unread: false
         };
       }
+      
+      const senderData = notification.sender ? {
+        id: notification.sender.id,
+        student_code: notification.sender.student_code,
+        email: notification.sender.email,
+        display_name: notification.sender.profiles?.[0]?.display_name || notification.sender.student_code,
+        avatar_url: notification.sender.profiles?.[0]?.avatar_url || null
+      } : null;
+      
       grouped[commentId].count++;
       grouped[commentId].notifications.push({
         ...Notification.fromDatabase(notification).toJSON(),
-        sender: notification.sender
+        sender: senderData
       });
       if (!notification.is_read) {
         grouped[commentId].has_unread = true;
@@ -141,7 +187,15 @@ class NotificationService {
     
     const { data, error } = await supabase
       .from('notifications')
-      .select('*, sender:students!sender_id(id, student_code, full_name, email, avatar_url)')
+      .select(`
+        *,
+        sender:students!sender_id(
+          id,
+          student_code,
+          email,
+          profiles(display_name, avatar_url)
+        )
+      `)
       .eq('id', notificationId)
       .eq('recipient_id', userId)
       .single();
@@ -149,9 +203,17 @@ class NotificationService {
     if (error) throw error;
     if (!data) return null;
 
+    const senderData = data.sender ? {
+      id: data.sender.id,
+      student_code: data.sender.student_code,
+      email: data.sender.email,
+      display_name: data.sender.profiles?.[0]?.display_name || data.sender.student_code,
+      avatar_url: data.sender.profiles?.[0]?.avatar_url || null
+    } : null;
+
     return {
       ...Notification.fromDatabase(data).toJSON(),
-      sender: data.sender
+      sender: senderData
     };
   }
 
