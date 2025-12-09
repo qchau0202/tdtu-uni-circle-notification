@@ -355,6 +355,30 @@ class NotificationService {
 
     if (error) throw error;
 
+    // Create a follow notification
+    try {
+      // Fetch follower's display name for the notification
+      const { data: followerProfile } = await supabase
+        .from('students')
+        .select('student_code, profiles(display_name)')
+        .eq('id', followerId)
+        .single();
+      
+      const followerName = followerProfile?.profiles?.[0]?.display_name || 
+                          followerProfile?.student_code || 
+                          'Someone';
+
+      await this.createNotification({
+        recipient_id: followingId,
+        sender_id: followerId,
+        type: 'follow',
+        title: `${followerName} started following you`
+      });
+    } catch (notificationError) {
+      // Log but don't fail the follow operation
+      console.error('Failed to create follow notification:', notificationError);
+    }
+
     return {
       ...Follower.fromDatabase(data).toJSON(),
       following: data.following
